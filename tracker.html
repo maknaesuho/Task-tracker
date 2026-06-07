@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Трекер">
+<title>Трекер занятий</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efefed;
+    --text: #1a1a1a;
+    --text2: #6b6b6b;
+    --text3: #9b9b9b;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --success-bg: #eaf3de;
+    --success-text: #3b6d11;
+    --success-border: rgba(59,109,17,0.3);
+    --danger-bg: #fcebeb;
+    --danger-text: #a32d2d;
+    --danger-border: rgba(163,45,45,0.3);
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e;
+      --bg2: #2c2c2e;
+      --bg3: #3a3a3c;
+      --text: #f2f2f7;
+      --text2: #aeaeb2;
+      --text3: #636366;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
+      --success-bg: #173404;
+      --success-text: #c0dd97;
+      --success-border: rgba(192,221,151,0.3);
+      --danger-bg: #501313;
+      --danger-text: #f7c1c1;
+      --danger-border: rgba(247,193,193,0.3);
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 16px 16px 80px; }
+
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+  .top-bar h1 { font-size: 20px; font-weight: 600; }
+  .top-actions { display: flex; align-items: center; gap: 8px; }
+  .date-nav { display: flex; align-items: center; gap: 6px; }
+  .date-nav button, .edit-btn { background: none; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--text2); font-family: inherit; }
+  .date-nav button:hover, .edit-btn:hover { background: var(--bg2); }
+  .date-label { font-size: 14px; font-weight: 500; color: var(--text); min-width: 110px; text-align: center; }
+  .edit-btn { display: flex; align-items: center; gap: 5px; }
+  .edit-btn.active { border-color: var(--border2); color: var(--text); background: var(--bg2); }
+
+  .summary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); gap: 8px; margin-bottom: 20px; }
+  .sum-card { background: var(--bg2); border-radius: var(--radius); padding: 10px 10px; text-align: center; }
+  .sum-card .cat-icon { font-size: 20px; margin-bottom: 3px; }
+  .sum-card .cat-name { font-size: 11px; color: var(--text2); margin-bottom: 2px; }
+  .sum-card .cat-count { font-size: 20px; font-weight: 600; }
+  .sum-card .cat-status { font-size: 11px; margin-top: 2px; }
+
+  .section { margin-bottom: 20px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .section-title { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .section-count { font-size: 12px; color: var(--text2); }
+
+  .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+  .item-btn { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-size: 13px; color: var(--text2); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-family: inherit; transition: all 0.1s; }
+  .item-btn:hover { border-color: var(--border2); background: var(--bg2); }
+  .item-btn.done { background: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
+  .item-btn .item-name { flex: 1; }
+
+  .tt-section { background: var(--danger-bg); border: 0.5px solid var(--danger-border); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 20px; }
+  .tt-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .tt-header span { font-size: 13px; font-weight: 500; color: var(--danger-text); }
+  .tt-note { font-size: 12px; color: var(--danger-text); opacity: 0.8; margin-bottom: 10px; }
+  .tt-toggle { background: none; border: 0.5px solid var(--danger-border); border-radius: var(--radius); padding: 7px 16px; font-size: 13px; color: var(--danger-text); cursor: pointer; font-family: inherit; }
+  .tt-toggle:hover { background: rgba(163,45,45,0.08); }
+  .tt-toggle.done { font-weight: 500; }
+
+  /* EDIT PANEL */
+  .edit-panel { display: none; background: var(--bg2); border-radius: var(--radius-lg); border: 0.5px solid var(--border2); padding: 16px; margin-bottom: 20px; }
+  .edit-panel.visible { display: block; }
+  .edit-panel-title { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  .edit-cat-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .edit-cat-row { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+  .edit-cat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .edit-cat-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .icon-btn { background: none; border: none; cursor: pointer; color: var(--text2); font-size: 16px; padding: 3px 5px; border-radius: 4px; }
+  .icon-btn:hover { background: var(--bg2); color: var(--danger-text); }
+  .edit-items-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+  .edit-item-tag { display: flex; align-items: center; gap: 4px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 99px; padding: 3px 10px; font-size: 12px; color: var(--text2); }
+  .remove-item { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; line-height: 1; padding: 0 0 0 2px; }
+  .remove-item:hover { color: var(--danger-text); }
+  .add-item-form { display: flex; gap: 6px; }
+  .text-input { flex: 1; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; background: var(--bg); color: var(--text); font-family: inherit; outline: none; }
+  .text-input:focus { border-color: var(--text3); }
+  .small-btn { background: none; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 12px; font-size: 13px; cursor: pointer; color: var(--text2); font-family: inherit; white-space: nowrap; }
+  .small-btn:hover { background: var(--bg2); color: var(--text); }
+  .new-cat-form { border-top: 0.5px solid var(--border); padding-top: 14px; }
+  .new-cat-form-title { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+  .new-cat-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .color-picker-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent; transition: border-color 0.1s; }
+  .color-dot.selected { border-color: var(--text); }
+
+  /* HISTORY */
+  .section-sep { height: 0.5px; background: var(--border); margin: 24px 0; }
+  .history-title { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  .table-wrap { overflow-x: auto; }
+  .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .history-table th { text-align: left; color: var(--text2); font-weight: 400; padding: 4px 6px; border-bottom: 0.5px solid var(--border); }
+  .history-table td { padding: 6px 6px; border-bottom: 0.5px solid var(--border); }
+  .history-table tr:last-child td { border-bottom: none; }
+  .pill-bad { display: inline-block; border-radius: 99px; padding: 2px 8px; font-size: 11px; font-weight: 500; background: var(--danger-bg); color: var(--danger-text); }
+  .pill-yes { display: inline-block; border-radius: 99px; padding: 2px 8px; font-size: 11px; font-weight: 500; background: var(--success-bg); color: var(--success-text); }
+
+  /* WEEKLY */
+  .wt { font-size: 14px; font-weight: 500; margin-bottom: 10px; margin-top: 24px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .bar-label { font-size: 11px; color: var(--text2); width: 75px; flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; background: var(--bg2); border-radius: 99px; height: 12px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; min-width: 2px; }
+  .bar-val { font-size: 12px; color: var(--text2); width: 24px; text-align: right; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-bar">
+    <h1>трекер занятий</h1>
+    <div class="top-actions">
+      <div class="date-nav">
+        <button onclick="shiftDay(-1)">←</button>
+        <span class="date-label" id="dateLabel"></span>
+        <button onclick="shiftDay(1)">→</button>
+      </div>
+      <button class="edit-btn" id="editToggleBtn" onclick="toggleEditMode()">
+        <i class="ti ti-settings"></i> изменить
+      </button>
+    </div>
+  </div>
+
+  <div class="edit-panel" id="editPanel">
+    <div class="edit-panel-title">редактирование категорий и занятий</div>
+    <div class="edit-cat-list" id="editCatList"></div>
+    <div class="new-cat-form">
+      <div class="new-cat-form-title">добавить новую категорию</div>
+      <div class="new-cat-row">
+        <input class="text-input" id="newCatName" placeholder="название категории" style="max-width:200px" onkeydown="if(event.key==='Enter')addCategory()" />
+        <button class="small-btn" onclick="addCategory()"><i class="ti ti-plus"></i> добавить</button>
+      </div>
+      <div class="color-picker-row" id="colorPicker"></div>
+    </div>
+  </div>
+
+  <div class="summary-row" id="summaryRow"></div>
+  <div id="categorySections"></div>
+
+  <div class="tt-section">
+    <div class="tt-header">
+      <i class="ti ti-device-mobile" style="font-size:16px;color:var(--danger-text)"></i>
+      <span>тикток / рилсы</span>
+    </div>
+    <div class="tt-note">brain rot — стараемся минимизировать</div>
+    <button class="tt-toggle" id="ttBtn" onclick="toggleTT()">не смотрела</button>
+  </div>
+
+  <div class="section-sep"></div>
+
+  <div class="history-title">история за 7 дней</div>
+  <div class="table-wrap">
+    <table class="history-table">
+      <thead id="historyHead"></thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </div>
+
+  <div class="wt">неделя: баланс по категориям</div>
+  <div id="weeklyBars"></div>
+</div>
+
+<script>
+const PALETTE = ['#d4537e','#1d9e75','#534ab7','#ba7517','#3266ad','#e24b4a','#0f6e56','#3b6d11','#993c1d','#185fa5'];
+const ICONS = ['ti-sparkles','ti-home','ti-brain','ti-popcorn','ti-heart','ti-star','ti-leaf','ti-music','ti-book','ti-run','ti-dumbbell','ti-sun','ti-moon','ti-plant','ti-palette'];
+
+const DEFAULT_CATS = [
+  { id: 'beauty', name: 'красота', icon: 'ti-sparkles', color: '#d4537e',
+    items: ['маска для волос','маска для лица','ламинирование бровей','покраска бровей','ламинирование ресниц','окрашивание ресниц','скрабирование тела','фотоэпиляция','окрашивание волос','ретинол'] },
+  { id: 'home', name: 'дом', icon: 'ti-home', color: '#1d9e75',
+    items: ['уборка полная','уборка поверхностная','уборка лотка','посуда','стирка','сушилка','готовка пп','готовка не пп','фанд','ланч на работу'] },
+  { id: 'mind', name: 'ум / дела', icon: 'ti-brain', color: '#534ab7',
+    items: ['курсы по SQL','немецкий','подача заявок / работа','AI проекты','курсы по Python','планирование свадьбы','планирование поездок'] },
+  { id: 'leisure', name: 'досуг', icon: 'ti-popcorn', color: '#ba7517',
+    items: ['Netflix saved','Off Campus','сериалы','дорамы','Извне (с Ромой)','Бункер (с Ромой)','фильмы с Ромой','книга',"Assassin's Creed Shadows",'Stardew Valley','Uncharted','игра на телефоне'] },
+  { id: 'health', name: 'здоровье', icon: 'ti-heart', color: '#3266ad',
+    items: ['HIIT круговая','силовая','степпер','растяжка','витамины','нить для зубов','зарядка для спины'] },
+];
+
+let selectedColor = PALETTE[0];
+let cats = [];
+let data = {};
+let editMode = false;
+let today = new Date(); today.setHours(0,0,0,0);
+let currentDate = new Date(today);
+
+function dateKey(d) { return d.toISOString().slice(0,10); }
+function formatDate(d) {
+  const dn = ['вс','пн','вт','ср','чт','пт','сб'];
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getFullYear()).slice(-2)} ${dn[d.getDay()]}`;
+}
+function getDay(d) {
+  const k = dateKey(d);
+  if (!data[k]) data[k] = { items: {}, tt: false };
+  return data[k];
+}
+function uid() { return Math.random().toString(36).slice(2,8); }
+
+function saveCats() { localStorage.setItem('tracker-cats-v1', JSON.stringify(cats)); }
+function saveData() { localStorage.setItem('tracker-data-v1', JSON.stringify(data)); }
+function loadAll() {
+  try { cats = JSON.parse(localStorage.getItem('tracker-cats-v1')) || JSON.parse(JSON.stringify(DEFAULT_CATS)); }
+  catch(e) { cats = JSON.parse(JSON.stringify(DEFAULT_CATS)); }
+  try { data = JSON.parse(localStorage.getItem('tracker-data-v1')) || {}; }
+  catch(e) { data = {}; }
+}
+
+function toggleItem(catId, item) {
+  const day = getDay(currentDate);
+  const key = catId + '::' + item;
+  day.items[key] = !day.items[key];
+  saveData(); render();
+}
+function toggleTT() {
+  const day = getDay(currentDate);
+  day.tt = !day.tt;
+  saveData(); render();
+}
+function shiftDay(n) {
+  currentDate = new Date(currentDate);
+  currentDate.setDate(currentDate.getDate() + n);
+  render();
+}
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('editToggleBtn').classList.toggle('active', editMode);
+  render();
+}
+
+function addItemTocat(catId) {
+  const input = document.getElementById('newitem-' + catId);
+  const val = input.value.trim();
+  if (!val) return;
+  const cat = cats.find(c => c.id === catId);
+  if (cat && !cat.items.includes(val)) cat.items.push(val);
+  input.value = '';
+  saveCats(); render();
+}
+function removeItem(catId, item) {
+  const cat = cats.find(c => c.id === catId);
+  if (cat) cat.items = cat.items.filter(i => i !== item);
+  saveCats(); render();
+}
+function removeCategory(catId) {
+  if (!confirm('Удалить категорию?')) return;
+  cats = cats.filter(c => c.id !== catId);
+  saveCats(); render();
+}
+function addCategory() {
+  const name = document.getElementById('newCatName').value.trim();
+  if (!name) return;
+  cats.push({ id: uid(), name, icon: ICONS[cats.length % ICONS.length], color: selectedColor, items: [] });
+  document.getElementById('newCatName').value = '';
+  saveCats(); render();
+}
+function pickColor(color) {
+  selectedColor = color;
+  renderColorPicker();
+}
+function renderColorPicker() {
+  document.getElementById('colorPicker').innerHTML = PALETTE.map(c =>
+    `<div class="color-dot${c===selectedColor?' selected':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`
+  ).join('');
+}
+
+function getCatCounts(d) {
+  const day = getDay(d);
+  const res = {};
+  cats.forEach(c => {
+    let cnt = 0;
+    c.items.forEach(it => { if (day.items[c.id+'::'+it]) cnt++; });
+    res[c.id] = cnt;
+  });
+  res.tt = day.tt;
+  return res;
+}
+
+function esc(s) { return s.replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+function render() {
+  document.getElementById('dateLabel').textContent = formatDate(currentDate);
+  const day = getDay(currentDate);
+  const counts = getCatCounts(currentDate);
+
+  document.getElementById('editPanel').classList.toggle('visible', editMode);
+  if (editMode) renderEditPanel();
+  renderColorPicker();
+
+  document.getElementById('summaryRow').innerHTML = cats.map(c => `
+    <div class="sum-card">
+      <div class="cat-icon"><i class="ti ${c.icon}" style="color:${c.color}"></i></div>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-count" style="color:${counts[c.id]>0?c.color:'var(--text3)'}">${counts[c.id]}</div>
+      <div class="cat-status" style="color:${counts[c.id]>0?c.color:'var(--text3)'}">${counts[c.id]>0?'есть ✓':'пусто'}</div>
+    </div>
+  `).join('') + `
+    <div class="sum-card">
+      <div class="cat-icon"><i class="ti ti-device-mobile" style="color:var(--danger-text)"></i></div>
+      <div class="cat-name">ТТ / рилсы</div>
+      <div class="cat-count" style="color:${day.tt?'var(--danger-text)':'var(--success-text)'}">${day.tt?'😵':'✓'}</div>
+      <div class="cat-status" style="color:${day.tt?'var(--danger-text)':'var(--success-text)'}">${day.tt?'смотрела':'нет'}</div>
+    </div>
+  `;
+
+  document.getElementById('categorySections').innerHTML = cats.map(c => `
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="dot" style="background:${c.color}"></span>
+          <i class="ti ${c.icon}" style="color:${c.color}"></i>
+          ${c.name}
+        </div>
+        <span class="section-count">${counts[c.id]} из ${c.items.length}</span>
+      </div>
+      <div class="items-grid">
+        ${c.items.map(it => {
+          const done = !!day.items[c.id+'::'+it];
+          return `<button class="item-btn${done?' done':''}" onclick="toggleItem('${c.id}','${esc(it)}')">
+            <span class="item-name">${it}</span>
+            <span>${done?'<i class="ti ti-check"></i>':''}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('ttBtn').textContent = day.tt ? '✗ смотрела (нажми чтобы убрать)' : 'не смотрела';
+  document.getElementById('ttBtn').className = 'tt-toggle' + (day.tt ? ' done' : '');
+
+  renderHistory();
+  renderWeekly();
+}
+
+function renderEditPanel() {
+  document.getElementById('editCatList').innerHTML = cats.map(c => `
+    <div class="edit-cat-row">
+      <div class="edit-cat-header">
+        <span class="dot" style="background:${c.color}"></span>
+        <i class="ti ${c.icon}" style="color:${c.color};font-size:15px"></i>
+        <span class="edit-cat-name">${c.name}</span>
+        <button class="icon-btn" onclick="removeCategory('${c.id}')" title="удалить"><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="edit-items-row">
+        ${c.items.map(it => `
+          <span class="edit-item-tag">${it}
+            <button class="remove-item" onclick="removeItem('${c.id}','${esc(it)}')" title="удалить">×</button>
+          </span>`).join('')}
+      </div>
+      <div class="add-item-form">
+        <input class="text-input" id="newitem-${c.id}" placeholder="новое занятие..." onkeydown="if(event.key==='Enter')addItemTocat('${c.id}')" />
+        <button class="small-btn" onclick="addItemTocat('${c.id}')"><i class="ti ti-plus"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHistory() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate()-i); days.push(d); }
+  document.getElementById('historyHead').innerHTML = `<tr>
+    <th style="width:68px">дата</th>
+    ${cats.map(c => `<th style="width:34px;color:${c.color}">${c.name.slice(0,3)}</th>`).join('')}
+    <th style="width:38px">ТТ</th>
+  </tr>`;
+  document.getElementById('historyBody').innerHTML = days.map(d => {
+    const k = dateKey(d); const has = !!data[k]; const c = getCatCounts(d);
+    const isCur = dateKey(d) === dateKey(currentDate);
+    const dn = ['вс','пн','вт','ср','чт','пт','сб'];
+    return `<tr style="${isCur?'background:var(--bg2)':''}">
+      <td style="font-size:11px;color:${dateKey(d)===dateKey(today)?'var(--text)':'var(--text2)'}">
+        ${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')} ${dn[d.getDay()]}
+      </td>
+      ${cats.map(cat => `<td><span style="font-size:13px;font-weight:500;color:${c[cat.id]>0?cat.color:'var(--text3)'}">${has?c[cat.id]:'–'}</span></td>`).join('')}
+      <td>${has?(c.tt?'<span class="pill-bad">да</span>':'<span class="pill-yes">нет</span>'):'–'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderWeekly() {
+  const totals = {}; cats.forEach(c => totals[c.id]=0); let ttDays=0;
+  for (let i=6;i>=0;i--) {
+    const d=new Date(today); d.setDate(d.getDate()-i);
+    const c=getCatCounts(d);
+    cats.forEach(cat => totals[cat.id]+=c[cat.id]);
+    if(c.tt) ttDays++;
+  }
+  const maxVal = Math.max(...Object.values(totals), 1);
+  document.getElementById('weeklyBars').innerHTML = cats.map(c => {
+    const val=totals[c.id]; const pct=Math.round(val/maxVal*100);
+    return `<div class="bar-row">
+      <span class="bar-label">${c.name}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${c.color}"></div></div>
+      <span class="bar-val">${val}</span>
+    </div>`;
+  }).join('') + `<div class="bar-row">
+    <span class="bar-label" style="color:var(--danger-text)">ТТ / рилсы</span>
+    <div class="bar-track" style="background:var(--danger-bg)">
+      <div class="bar-fill" style="width:${Math.round(ttDays/7*100)}%;background:#e24b4a"></div>
+    </div>
+    <span class="bar-val" style="color:var(--danger-text)">${ttDays}д</span>
+  </div>`;
+}
+
+loadAll();
+render();
+</script>
+</body>
+</html>
